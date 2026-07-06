@@ -16,3 +16,5 @@ app.use(
 app.get("/", (req, res) => {
   res.send("No Events Found!");
 });
+
+module.exports = app;
