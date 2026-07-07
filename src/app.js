@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 app.use(express.json());
@@ -16,5 +17,8 @@ app.use(
 app.get("/", (req, res) => {
   res.send("No Events Found!");
 });
+
+//User Routes
+app.use("/api/auth", authRoutes);
 
 module.exports = app;
