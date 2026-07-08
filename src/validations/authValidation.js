@@ -4,7 +4,7 @@ const registrationSchema = z.object({
   name: z.string().min(3).max(35),
   email: z.string().email(),
   password: z.string().min(6),
-  role: z.enum(["organiser", "attendee"]),
+  role: z.enum(["organizer", "attendee"]),
 });
 
 const loginSchema = z.object({

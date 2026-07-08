@@ -40,6 +40,22 @@ const createEvent = async (req, res) => {
 };
 
 //Get all events
+const getAllEvents = async (req, res) => {
+  try {
+    const events = await Event.find().populate("organizer", "name email");
+
+    return res.status(200).json({
+      success: true,
+      count: events.length,
+      events,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
 
 //Get event by ID
 
@@ -49,4 +65,5 @@ const createEvent = async (req, res) => {
 
 module.exports = {
   createEvent,
+  getAllEvents,
 };
