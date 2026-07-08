@@ -42,7 +42,9 @@ const createEvent = async (req, res) => {
 //Get all events
 const getAllEvents = async (req, res) => {
   try {
-    const events = await Event.find().populate("organizer", "name email");
+    const events = await Event.find()
+      .select("title date location availableSeats")
+      .populate("organizer", "name email");
 
     return res.status(200).json({
       success: true,
@@ -58,7 +60,31 @@ const getAllEvents = async (req, res) => {
 };
 
 //Get event by ID
+const getEventById = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id).populate(
+      "organizer",
+      "name email",
+    );
 
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found!",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      event,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
 //Delete event
 
 //update event
@@ -66,4 +92,5 @@ const getAllEvents = async (req, res) => {
 module.exports = {
   createEvent,
   getAllEvents,
+  getEventById,
 };
