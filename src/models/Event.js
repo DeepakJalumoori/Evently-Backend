@@ -14,15 +14,33 @@ const eventSchema = new mongoose.Schema(
       trim: true,
     },
 
-    date: {
+    category: {
+      type: String,
+      enum: ["music", "tech", "sports", "workshop", "other"],
+      required: true,
+    },
+
+    venue: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    city: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    dateTime: {
       type: Date,
       required: true,
     },
 
-    location: {
-      type: String,
+    price: {
+      type: Number,
       required: true,
-      trim: true,
+      min: 0,
     },
 
     capacity: {
@@ -34,6 +52,7 @@ const eventSchema = new mongoose.Schema(
     availableSeats: {
       type: Number,
       required: true,
+      min: 0,
     },
 
     organizer: {

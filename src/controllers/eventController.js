@@ -15,7 +15,16 @@ const createEvent = async (req, res) => {
       });
     }
 
-    const { title, description, date, location, capacity } = result.data;
+    const {
+      title,
+      description,
+      category,
+      venue,
+      city,
+      dateTime,
+      price,
+      capacity,
+    } = result.data;
 
     const event = await Event.create({
       title,
