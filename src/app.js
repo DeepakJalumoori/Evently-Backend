@@ -15,9 +15,9 @@ app.use(
   }),
 );
 
-app.get("/", (req, res) => {
-  res.send("No Events Found!");
-});
+// app.get("/", (req, res) => {
+//   res.send("No Events Found!");
+// });
 
 //User Routes
 app.use("/api/auth", authRoutes);

@@ -12,6 +12,9 @@ const createEventSchema = z.object({
   capacity: z.number().min(1),
 });
 
+const updateEventSchema = createEventSchema.partial();
+
 module.exports = {
   createEventSchema,
+  updateEventSchema,
 };
