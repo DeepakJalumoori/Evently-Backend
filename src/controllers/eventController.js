@@ -143,9 +143,45 @@ const updateEvent = async (req, res) => {
   }
 };
 
+//Delete event
+const deleteEvent = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found",
+      });
+    }
+
+    if (event.organizer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to delete this event",
+      });
+    }
+
+    await event.deleteOne();
+
+    return res.status(200).json({
+      success: true,
+      message: "Event deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
 module.exports = {
   createEvent,
   getAllEvents,
   getEventById,
   updateEvent,
+  deleteEvent,
 };
