@@ -29,8 +29,11 @@ const createEvent = async (req, res) => {
     const event = await Event.create({
       title,
       description,
-      date,
-      location,
+      category,
+      venue,
+      city,
+      dateTime,
+      price,
       capacity,
       availableSeats: capacity,
       organizer: req.user._id,
@@ -54,8 +57,31 @@ const createEvent = async (req, res) => {
 //Get all events
 const getAllEvents = async (req, res) => {
   try {
-    const events = await Event.find()
-      .select("title date location availableSeats")
+    //Filtering events
+    const { city, category, from, to } = req.query;
+    const query = {};
+
+    if (city) {
+      query.city = city;
+    }
+
+    if (category) {
+      query.category = category;
+    }
+
+    if (from || to) {
+      query.dateTime = {};
+    }
+
+    if (from) {
+      query.dateTime.$gte = new Date(from);
+    }
+
+    if (to) {
+      query.dateTime.$lte = new Date(to);
+    }
+    const events = await Event.find(query)
+      .select("title category city venue dateTime price availableSeats")
       .populate("organizer", "name email");
 
     return res.status(200).json({
