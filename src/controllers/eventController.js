@@ -58,7 +58,7 @@ const createEvent = async (req, res) => {
 const getAllEvents = async (req, res) => {
   try {
     //Filtering events
-    const { city, category, from, to } = req.query;
+    const { city, category, from, to, q } = req.query;
     const query = {};
 
     if (city) {
@@ -79,6 +79,14 @@ const getAllEvents = async (req, res) => {
 
     if (to) {
       query.dateTime.$lte = new Date(to);
+    }
+
+    //Search the text/event name
+    if (q) {
+      query.title = {
+        $regex: q,
+        $options: "i",
+      };
     }
     const events = await Event.find(query)
       .select("title category city venue dateTime price availableSeats")
