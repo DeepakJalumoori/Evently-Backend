@@ -58,7 +58,7 @@ const createEvent = async (req, res) => {
 const getAllEvents = async (req, res) => {
   try {
     //Filtering events
-    const { city, category, from, to, q } = req.query;
+    const { city, category, from, to, q, sort } = req.query;
     const query = {};
 
     if (city) {
@@ -88,8 +88,21 @@ const getAllEvents = async (req, res) => {
         $options: "i",
       };
     }
+
+    //sorting events
+    const sortQuery = {};
+    if (sort) {
+      const order = sort.startsWith("-") ? -1 : 1;
+
+      const field = sort.startsWith("-") ? sort.slice(1) : sort;
+
+      sortQuery[field] = order;
+    }
+
+    //Fetching events
     const events = await Event.find(query)
       .select("title category city venue dateTime price availableSeats")
+      .sort(sortQuery)
       .populate("organizer", "name email");
 
     return res.status(200).json({
