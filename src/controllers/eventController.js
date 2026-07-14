@@ -58,7 +58,7 @@ const createEvent = async (req, res) => {
 const getAllEvents = async (req, res) => {
   try {
     //Filtering events
-    const { city, category, from, to, q, sort } = req.query;
+    const { city, category, from, to, q, sort, page, limit } = req.query;
     const query = {};
 
     if (city) {
@@ -99,16 +99,29 @@ const getAllEvents = async (req, res) => {
       sortQuery[field] = order;
     }
 
+    //pagination
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const pageLimit = Math.max(Number(limit) || 5, 1);
+
+    const skip = (pageNumber - 1) * pageLimit;
+
+    const totalResults = await Event.countDocuments(query);
+    const totalPages = Math.ceil(totalResults / pageLimit);
+
     //Fetching events
     const events = await Event.find(query)
       .select("title category city venue dateTime price availableSeats")
       .sort(sortQuery)
+      .skip(skip)
+      .limit(pageLimit)
       .populate("organizer", "name email");
 
     return res.status(200).json({
       success: true,
-      count: events.length,
-      events,
+      totalResults,
+      totalPages,
+      currentPage: pageNumber,
+      data: events,
     });
   } catch (error) {
     return res.status(500).json({
