@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const eventRoutes = require("./routes/eventRoutes");
+const bookingRoutes = require("./routes/bookingRoutes");
 
 const app = express();
 app.use(express.json());
@@ -15,14 +16,17 @@ app.use(
   }),
 );
 
-// app.get("/", (req, res) => {
-//   res.send("No Events Found!");
-// });
+app.get("/", (req, res) => {
+  res.send("No Events Found!");
+});
 
 //User Routes
 app.use("/api/auth", authRoutes);
 
 //Event Routes
 app.use("/api/events", eventRoutes);
+
+//Booking routes
+app.use("/api/booking", bookingRoutes);
 
 module.exports = app;
