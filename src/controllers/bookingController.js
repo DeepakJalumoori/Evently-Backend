@@ -3,7 +3,7 @@ const Booking = require("../models/Booking");
 
 const bookEvent = async (req, res) => {
   try {
-    const eventId = req.params.eventId;
+    const { eventId } = req.params;
     const event = await Event.findById(eventId);
 
     //checking for events
@@ -60,4 +60,64 @@ const bookEvent = async (req, res) => {
   }
 };
 
-module.exports = bookEvent;
+const cancelEvent = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const booking = await Booking.findById(bookingId);
+
+    //checking the booking exists or not
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found.",
+      });
+    }
+
+    //checking whether the current booking belongs to logged in user
+    if (!booking.user.equals(req.user._id)) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to cancel this booking.",
+      });
+    }
+
+    //checking the status of booking
+    if (booking.status === "cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: "Booking is already cancelled.",
+      });
+    }
+
+    //checking for the event
+    const event = await Event.findById(booking.event);
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found.",
+      });
+    }
+
+    //cancelling the event
+    event.availableSeats++;
+    booking.status = "cancelled";
+
+    await event.save();
+    await booking.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Event cancelled successfully",
+      booking,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+module.exports = { bookEvent, cancelEvent };
