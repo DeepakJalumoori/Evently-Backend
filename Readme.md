@@ -1,14 +1,14 @@
 # Evently – Event Booking REST API
 
-A RESTful backend API for an event booking platform built with **Node.js**, **Express.js**, and **MongoDB**.
+A RESTful backend API for an event booking platform built using **Node.js**, **Express.js**, and **MongoDB**.
 
-Evently allows organizers to create and manage events while attendees can browse and book events. The project focuses on authentication, authorization, clean API design, validation, and secure backend development.
+Evently enables organizers to create and manage events while attendees can discover, search, filter, and book events securely. The project demonstrates authentication, authorization, pagination, validation, MongoDB indexing, race condition prevention, and transaction handling for a production-ready booking system.
 
 ---
 
-## Features
+# Features
 
-### Authentication
+## Authentication & Authorization
 
 - User Registration
 - User Login
@@ -16,51 +16,90 @@ Evently allows organizers to create and manage events while attendees can browse
 - JWT Authentication
 - Role-based Authorization (Organizer / Attendee)
 
-### Event Management
+---
+
+## Event Management
 
 - Create Event (Organizer Only)
-- Get All Events
-- Get Event By ID
 - Update Own Event
 - Delete Own Event
-
-### Validation
-
-- Request validation using Zod
-- Field-level validation errors
-- Consistent API responses
-
-### Security
-
-- Passwords are never stored in plain text
-- JWT-based protected routes
-- Role-based access control
-- Password excluded from API responses
+- Get All Events
+- Get Event By ID
 
 ---
 
-## Tech Stack
+## Event Discovery
 
-### Backend
+- Filter by City
+- Filter by Category
+- Filter by Date Range
+- Search Events by Title
+- Sort Events by Price or Date
+- Pagination
+- Pagination Metadata
+
+---
+
+## Booking System
+
+- Book Events
+- Multi-seat Booking (1–5 Seats)
+- Cancel Booking
+- View My Bookings
+- Automatic Seat Management
+- Total Booking Amount Calculation
+
+---
+
+## Database Features
+
+- MongoDB Relationships using References
+- Compound Indexes
+- Text Indexes
+- Atomic Seat Reservation
+- MongoDB Transactions
+
+---
+
+## Validation
+
+- Request Validation using Zod
+- Field-level Validation Errors
+- Consistent API Responses
+
+---
+
+## Security
+
+- Password Hashing using bcrypt
+- JWT Protected Routes
+- Role-based Access Control
+- Password Excluded from Responses
+
+---
+
+# Tech Stack
+
+## Backend
 
 - Node.js
 - Express.js
 
-### Database
+## Database
 
 - MongoDB
 - Mongoose
 
-### Authentication
+## Authentication
 
 - JWT (jsonwebtoken)
 - bcrypt
 
-### Validation
+## Validation
 
 - Zod
 
-### Development Tools
+## Development Tools
 
 - Nodemon
 - dotenv
@@ -68,16 +107,19 @@ Evently allows organizers to create and manage events while attendees can browse
 
 ---
 
-## Project Structure
+# Project Structure
 
 ```
 Evently/
 │
 ├── src/
 │
+├── config/
+│
 ├── controllers/
 │   ├── authController.js
-│   └── eventController.js
+│   ├── eventController.js
+│   └── bookingController.js
 │
 ├── middlewares/
 │   ├── authMiddleware.js
@@ -85,17 +127,17 @@ Evently/
 │
 ├── models/
 │   ├── User.js
-│   └── Event.js
+│   ├── Event.js
+│   └── Booking.js
 │
 ├── routes/
 │   ├── authRoutes.js
-│   └── eventRoutes.js
+│   ├── eventRoutes.js
+│   └── bookingRoutes.js
 │
 ├── validations/
 │   ├── authValidation.js
 │   └── eventValidation.js
-│
-├── config/
 │
 ├── app.js
 ├── server.js
@@ -104,7 +146,7 @@ Evently/
 
 ---
 
-## Installation
+# Installation
 
 Clone the repository
 
@@ -132,7 +174,7 @@ MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_secret_key
 ```
 
-Run the server
+Run the development server
 
 ```bash
 npm run dev
@@ -140,9 +182,9 @@ npm run dev
 
 ---
 
-## API Endpoints
+# API Endpoints
 
-### Authentication
+## Authentication
 
 | Method | Endpoint             | Access |
 | ------ | -------------------- | ------ |
@@ -151,7 +193,7 @@ npm run dev
 
 ---
 
-### Events
+## Events
 
 | Method | Endpoint          | Access            |
 | ------ | ----------------- | ----------------- |
@@ -163,7 +205,17 @@ npm run dev
 
 ---
 
-## Event Schema
+## Bookings
+
+| Method | Endpoint                         | Access   |
+| ------ | -------------------------------- | -------- |
+| POST   | `/api/booking/:eventId`          | Attendee |
+| PATCH  | `/api/booking/:bookingId/cancel` | Attendee |
+| GET    | `/api/booking`                   | Attendee |
+
+---
+
+# Event Schema
 
 ```javascript
 {
@@ -182,9 +234,19 @@ npm run dev
 
 ---
 
-## Authentication
+# Booking Schema
 
-Protected routes require a JWT token.
+```javascript
+{
+  (user, event, seats, totalAmount, status, createdAt, updatedAt);
+}
+```
+
+---
+
+# Authentication
+
+Protected routes require a valid JWT.
 
 ```
 Authorization: Bearer <JWT_TOKEN>
@@ -192,9 +254,9 @@ Authorization: Bearer <JWT_TOKEN>
 
 ---
 
-## Sample Request
+# Sample Request
 
-### Create Event
+## Create Event
 
 ```json
 {
@@ -211,24 +273,42 @@ Authorization: Bearer <JWT_TOKEN>
 
 ---
 
-## Sample Success Response
+## Book Event
 
 ```json
 {
-  "success": true,
-  "message": "Event created successfully"
+  "seats": 3
 }
 ```
 
 ---
 
-## Middleware
+# Sample Success Response
 
-### Authentication Middleware
+```json
+{
+  "success": true,
+  "message": "Event booked successfully",
+  "booking": {
+    "_id": "...",
+    "event": "...",
+    "user": "...",
+    "seats": 3,
+    "totalAmount": 1497,
+    "status": "booked"
+  }
+}
+```
+
+---
+
+# Middleware
+
+## Authentication Middleware
 
 - Verifies JWT
-- Finds logged-in user
-- Attaches user to request
+- Finds the logged-in user
+- Attaches the user to the request
 
 ```javascript
 req.user;
@@ -236,7 +316,7 @@ req.user;
 
 ---
 
-### Role Middleware
+## Role Middleware
 
 Allows access only to specified roles.
 
@@ -248,76 +328,116 @@ roleMiddleware("organizer");
 
 ---
 
-## Validation
+# Validation
 
 Request payloads are validated using **Zod** before reaching business logic.
 
-Example validations
+Validations include:
 
-- Required fields
-- String length
-- Positive numbers
-- Enum validation
-- ISO Date-Time validation
+- Required Fields
+- Minimum & Maximum Length
+- Positive Numbers
+- Enum Validation
+- ISO Date-Time Validation
 
 ---
 
-## Current Project Status
+# Database Indexes
 
-### Completed
+## Event Collection
 
-- Authentication
+| Index          | Purpose                              |
+| -------------- | ------------------------------------ |
+| `city`         | Optimizes city filtering             |
+| `category`     | Optimizes category filtering         |
+| `title (text)` | Enables efficient text search        |
+| `organizer`    | Optimizes organizer-specific queries |
+
+---
+
+## Booking Collection
+
+| Index                            | Purpose                                                   |
+| -------------------------------- | --------------------------------------------------------- |
+| `user + event (compound unique)` | Prevents duplicate bookings and speeds up booking lookups |
+
+---
+
+# Concurrency Handling
+
+To prevent overbooking when multiple users try to book the same event simultaneously:
+
+- Atomic seat updates using `findOneAndUpdate()`
+- MongoDB Transactions
+- Automatic rollback if any operation fails during booking
+- Consistent seat management during booking and cancellation
+
+---
+
+# Current Project Status
+
+## Completed
+
+- User Authentication
 - JWT Authorization
 - Role-based Authorization
 - Event CRUD APIs
-- Zod Validation
-- MongoDB Models
-- Password Hashing
-
-### In Progress
-
 - Event Filtering
 - Search
 - Sorting
 - Pagination
-
-### Upcoming Features
-
 - Booking System
-- Atomic Seat Booking
-- Booking Cancellation
-- Organizer Dashboard
-- MongoDB Aggregation
-- Centralized Error Handling
+- Cancel Booking
+- My Bookings
+- Multi-seat Booking
+- MongoDB Relationships
+- MongoDB Populate
 - Database Indexes
+- Atomic Seat Reservation
+- MongoDB Transactions
+- Zod Validation
 
 ---
 
-## Learning Objectives
+## Pending
+
+- Organizer Dashboard using Aggregation Pipeline
+- Centralized Error Middleware
+- 24-hour Booking Cancellation Restriction
+- Prevent Booking Past Events
+- Prevent Updating Past Events
+
+---
+
+# Learning Objectives
 
 This project demonstrates:
 
 - REST API Design
-- JWT Authentication
-- Authorization
+- Authentication & Authorization
 - Express Middleware
+- JWT Authentication
+- Password Hashing
 - MongoDB Relationships
+- MongoDB Populate
 - CRUD Operations
+- Filtering
+- Searching
+- Sorting
+- Pagination
 - Validation using Zod
-- Secure Password Storage
-- Mongoose Models
-- Error Handling
+- MongoDB Indexes
+- Compound Indexes
+- Atomic Updates
+- Race Condition Prevention
+- MongoDB Transactions
 
 ---
 
-## Future Improvements
+# Future Improvements
 
-- Booking APIs
-- Race Condition Prevention
-- MongoDB Transactions
-- Aggregation Pipeline
-- Database Indexes
-- Swagger Documentation
-- Docker Support
-- Unit Testing
-- CI/CD Pipeline
+- Organizer Analytics Dashboard
+- MongoDB Aggregation Pipeline
+- Centralized Error Handling Middleware
+- 24-hour Booking Cancellation Rule
+- Event Expiry Validation
