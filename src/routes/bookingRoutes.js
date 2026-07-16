@@ -1,5 +1,9 @@
 const express = require("express");
-const { bookEvent, cancelEvent } = require("../controllers/bookingController");
+const {
+  bookEvent,
+  cancelEvent,
+  myBookings,
+} = require("../controllers/bookingController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const roleMiddleware = require("../middlewares/roleMiddleware");
 
@@ -12,5 +16,6 @@ router.patch(
   roleMiddleware("attendee"),
   cancelEvent,
 );
+router.get("/", authMiddleware, roleMiddleware("attendee"), myBookings);
 
 module.exports = router;

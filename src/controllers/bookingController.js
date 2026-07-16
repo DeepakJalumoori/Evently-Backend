@@ -120,4 +120,31 @@ const cancelEvent = async (req, res) => {
   }
 };
 
-module.exports = { bookEvent, cancelEvent };
+const myBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find({ user: req.user._id }).populate(
+      "event",
+    );
+
+    if (bookings.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No bookings found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      bookings,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+};
+
+module.exports = { bookEvent, cancelEvent, myBookings };
