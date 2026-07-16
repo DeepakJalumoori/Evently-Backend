@@ -66,4 +66,12 @@ const eventSchema = new mongoose.Schema(
   },
 );
 
+eventSchema.index({ city: 1 });
+
+eventSchema.index({ category: 1 });
+
+eventSchema.index({ title: "text" });
+
+eventSchema.index({ organizer: 1 });
+
 module.exports = mongoose.model("Event", eventSchema);
