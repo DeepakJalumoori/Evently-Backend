@@ -17,6 +17,16 @@ const bookingSchema = new mongoose.Schema(
       enum: ["booked", "cancelled"],
       default: "booked",
     },
+    seats: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5,
+    },
+    totalAmount: {
+      type: Number,
+      required: true,
+    },
   },
   {
     timestamps: true,
