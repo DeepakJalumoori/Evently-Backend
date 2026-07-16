@@ -10,6 +10,7 @@ const bookEvent = async (req, res) => {
     session.startTransaction();
 
     const { eventId } = req.params;
+    const { seats } = req.body;
 
     // Check if the user has already booked this event
     const existBooking = await Booking.findOne({
@@ -21,20 +22,28 @@ const bookEvent = async (req, res) => {
     if (existBooking) {
       await session.abortTransaction();
 
-      return res.status(400).json({
+      return res.status(409).json({
         success: false,
         message: "You have already booked the event.",
       });
     }
 
+    if (!Number.isInteger(seats) || seats < 1 || seats > 5) {
+      await session.abortTransaction();
+
+      return res.status(400).json({
+        success: false,
+        message: "Seats must be between 1 and 5.",
+      });
+    }
     // Atomically decrease available seats
     const event = await Event.findOneAndUpdate(
       {
         _id: eventId,
-        availableSeats: { $gt: 0 },
+        availableSeats: { $gte: seats },
       },
       {
-        $inc: { availableSeats: -1 },
+        $inc: { availableSeats: -seats },
       },
       {
         new: true,
@@ -51,12 +60,15 @@ const bookEvent = async (req, res) => {
       });
     }
 
+    const totalAmount = seats * event.price;
     // Create booking
     const [booking] = await Booking.create(
       [
         {
           user: req.user._id,
           event: eventId,
+          seats,
+          totalAmount,
         },
       ],
       { session },
@@ -89,49 +101,61 @@ const bookEvent = async (req, res) => {
 };
 
 const cancelEvent = async (req, res) => {
-  try {
-    const { bookingId } = req.params;
-    const booking = await Booking.findById(bookingId);
+  let session;
 
-    //checking the booking exists or not
+  try {
+    session = await mongoose.startSession();
+    session.startTransaction();
+
+    const { bookingId } = req.params;
+
+    const booking = await Booking.findById(bookingId).session(session);
+
     if (!booking) {
+      await session.abortTransaction();
+
       return res.status(404).json({
         success: false,
         message: "Booking not found.",
       });
     }
 
-    //checking whether the current booking belongs to logged in user
     if (!booking.user.equals(req.user._id)) {
+      await session.abortTransaction();
+
       return res.status(403).json({
         success: false,
         message: "You are not allowed to cancel this booking.",
       });
     }
 
-    //checking the status of booking
     if (booking.status === "cancelled") {
+      await session.abortTransaction();
+
       return res.status(400).json({
         success: false,
         message: "Booking is already cancelled.",
       });
     }
 
-    //checking for the event
-    const event = await Event.findById(booking.event);
+    const event = await Event.findById(booking.event).session(session);
+
     if (!event) {
+      await session.abortTransaction();
+
       return res.status(404).json({
         success: false,
         message: "Event not found.",
       });
     }
 
-    //cancelling the event
-    event.availableSeats++;
+    event.availableSeats += booking.seats;
     booking.status = "cancelled";
 
-    await event.save();
-    await booking.save();
+    await event.save({ session });
+    await booking.save({ session });
+
+    await session.commitTransaction();
 
     return res.status(200).json({
       success: true,
@@ -139,12 +163,20 @@ const cancelEvent = async (req, res) => {
       booking,
     });
   } catch (error) {
+    if (session) {
+      await session.abortTransaction();
+    }
+
     console.error(error);
 
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
     });
+  } finally {
+    if (session) {
+      session.endSession();
+    }
   }
 };
 
