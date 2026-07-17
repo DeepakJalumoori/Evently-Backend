@@ -1,8 +1,8 @@
-const express = require("express");
-const cors = require("cors");
-const authRoutes = require("./routes/authRoutes");
-const eventRoutes = require("./routes/eventRoutes");
-const bookingRoutes = require("./routes/bookingRoutes");
+import express from "express";
+import cors from "cors";
+import authRoutes from "./routes/authRoutes.js";
+import eventRoutes from "./routes/eventRoutes.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
 
 const app = express();
 app.use(express.json());
@@ -16,10 +16,6 @@ app.use(
   }),
 );
 
-app.get("/", (req, res) => {
-  res.send("No Events Found!");
-});
-
 //User Routes
 app.use("/api/auth", authRoutes);
 
@@ -29,4 +25,4 @@ app.use("/api/events", eventRoutes);
 //Booking routes
 app.use("/api/booking", bookingRoutes);
 
-module.exports = app;
+export default app;

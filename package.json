@@ -15,7 +15,7 @@
   ],
   "author": "Deepak Jalmoori",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",

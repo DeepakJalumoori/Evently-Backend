@@ -1,6 +1,7 @@
-const Event = require("../models/Event");
-const Booking = require("../models/Booking");
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
+
+import Event from "../models/Event.js";
+import Booking from "../models/Booking.js";
 
 const bookEvent = async (req, res) => {
   let session;
@@ -207,4 +208,4 @@ const myBookings = async (req, res) => {
   }
 };
 
-module.exports = { bookEvent, cancelEvent, myBookings };
+export { bookEvent, cancelEvent, myBookings };

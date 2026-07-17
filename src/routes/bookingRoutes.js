@@ -1,11 +1,12 @@
-const express = require("express");
-const {
+import express from "express";
+
+import {
   bookEvent,
   cancelEvent,
   myBookings,
-} = require("../controllers/bookingController");
-const authMiddleware = require("../middlewares/authMiddleware");
-const roleMiddleware = require("../middlewares/roleMiddleware");
+} from "../controllers/bookingController.js";
+import authMiddleware from "../Middleware/authMiddleware.js";
+import roleMiddleware from "../Middleware/roleMiddleware.js";
 
 const router = express.Router();
 
@@ -18,4 +19,4 @@ router.patch(
 );
 router.get("/", authMiddleware, roleMiddleware("attendee"), myBookings);
 
-module.exports = router;
+export default router;

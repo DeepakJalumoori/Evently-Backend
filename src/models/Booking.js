@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const bookingSchema = new mongoose.Schema(
   {
@@ -38,4 +38,4 @@ bookingSchema.index({ user: 1, event: 1 }, { unique: true });
 
 const Booking = mongoose.model("Booking", bookingSchema);
 
-module.exports = Booking;
+export default Booking;

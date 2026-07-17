@@ -1,8 +1,8 @@
-const Event = require("../models/Event");
-const {
+import Event from "../models/Event.js";
+import {
   createEventSchema,
   updateEventSchema,
-} = require("../validations/eventValidation");
+} from "../validations/eventValidation.js";
 
 const createEvent = async (req, res) => {
   try {
@@ -247,10 +247,4 @@ const deleteEvent = async (req, res) => {
   }
 };
 
-module.exports = {
-  createEvent,
-  getAllEvents,
-  getEventById,
-  updateEvent,
-  deleteEvent,
-};
+export { createEvent, getAllEvents, getEventById, updateEvent, deleteEvent };

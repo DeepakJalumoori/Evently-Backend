@@ -1,4 +1,4 @@
-const { z } = require("zod");
+import { z } from "zod";
 
 const createEventSchema = z.object({
   title: z.string().min(3).max(100),
@@ -20,7 +20,4 @@ const createEventSchema = z.object({
 
 const updateEventSchema = createEventSchema.partial();
 
-module.exports = {
-  createEventSchema,
-  updateEventSchema,
-};
+export { createEventSchema, updateEventSchema };
