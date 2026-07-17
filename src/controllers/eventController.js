@@ -114,7 +114,7 @@ const getAllEvents = async (req, res) => {
       .sort(sortQuery)
       .skip(skip)
       .limit(pageLimit)
-      .populate("organizer", "name email");
+      .populate("organizer", "name ");
 
     return res.status(200).json({
       success: true,
@@ -136,7 +136,7 @@ const getEventById = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id).populate(
       "organizer",
-      "name email",
+      "name",
     );
 
     if (!event) {
@@ -179,7 +179,7 @@ const updateEvent = async (req, res) => {
       });
     }
 
-    if (event.date < new Date()) {
+    if (event.dateTime < new Date()) {
       return res.status(400).json({
         success: false,
         message: "Past events cannot be updated",
