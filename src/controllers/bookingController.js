@@ -153,8 +153,15 @@ const cancelEvent = async (req, res) => {
     event.availableSeats += booking.seats;
     booking.status = "cancelled";
 
-    await event.save({ session });
-    await booking.save({ session });
+    await Event.findByIdAndUpdate(
+      booking.event,
+      {
+        $inc: { availableSeats: booking.seats },
+      },
+      {
+        session,
+      },
+    );
 
     await session.commitTransaction();
 
