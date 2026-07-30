@@ -9,6 +9,7 @@ import eventRoutes from "./routes/eventRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 
 const app = express();
+
 app.use(express.json());
 
 app.use(
@@ -20,15 +21,20 @@ app.use(
   }),
 );
 
+// Redirect root URL to Swagger
+app.get("/", (req, res) => {
+  res.redirect("/api-docs");
+});
+
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-//User Routes
+// User Routes
 app.use("/api/auth", authRoutes);
 
-//Event Routes
+// Event Routes
 app.use("/api/events", eventRoutes);
 
-//Booking Routes
+// Booking Routes
 app.use("/api/booking", bookingRoutes);
 
 export default app;
