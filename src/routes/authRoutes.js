@@ -9,7 +9,7 @@ const router = express.Router();
  * /api/auth/register:
  *   post:
  *     summary: Register a new user
- *     description: Creates a new organiser or attendee account.
+ *     description: Creates a new organizer or attendee account.
  *     tags:
  *       - Authentication
  *     requestBody:
@@ -36,7 +36,7 @@ const router = express.Router();
  *               role:
  *                 type: string
  *                 enum:
- *                   - organiser
+ *                   - organizer
  *                   - attendee
  *                 example: attendee
  *     responses:
@@ -91,22 +91,18 @@ router.post("/register", registerUser);
  *                   example: Login successful
  *                 token:
  *                   type: string
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *                 user:
  *                   type: object
  *                   properties:
  *                     id:
  *                       type: string
- *                       example: 6888b2d2e2f3c5d7f1234567
  *                     name:
  *                       type: string
- *                       example: Deepak
  *                     email:
  *                       type: string
- *                       example: deepak@gmail.com
  *                     role:
  *                       type: string
- *                       example: attendee
+ *                       enum: [organizer, attendee]
  *       400:
  *         description: Validation error
  *       401:
