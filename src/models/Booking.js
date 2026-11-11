@@ -26,6 +26,7 @@ const bookingSchema = new mongoose.Schema(
     totalAmount: {
       type: Number,
       required: true,
+      min: 0,
     },
   },
   {
@@ -33,8 +34,15 @@ const bookingSchema = new mongoose.Schema(
   },
 );
 
-// Compound index to prevent a user from booking the same event multiple times
-bookingSchema.index({ user: 1, event: 1 }, { unique: true });
+// Keep historical cancelled bookings while preventing duplicate active bookings.
+bookingSchema.index(
+  { user: 1, event: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: "booked" },
+    name: "unique_active_booking_per_user_event",
+  },
+);
 
 const Booking = mongoose.model("Booking", bookingSchema);
 
