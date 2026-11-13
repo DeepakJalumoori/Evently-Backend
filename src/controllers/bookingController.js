@@ -5,76 +5,94 @@ import Booking from "../models/Booking.js";
 
 const isValidObjectId = (value) => mongoose.isValidObjectId(value);
 
+class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.name = "HttpError";
+    this.status = status;
+  }
+}
+
 const bookEvent = async (req, res) => {
+  const { eventId } = req.params;
+  const { seats } = req.body;
+
+  if (!isValidObjectId(eventId)) {
+    return res.status(400).json({ success: false, message: "Invalid event ID." });
+  }
+
+  if (!Number.isInteger(seats) || seats < 1 || seats > 5) {
+    return res.status(400).json({
+      success: false,
+      message: "Seats must be an integer between 1 and 5.",
+    });
+  }
+
   let session;
-
   try {
-    const { eventId } = req.params;
-    const { seats } = req.body;
-
-    if (!isValidObjectId(eventId)) {
-      return res.status(400).json({ success: false, message: "Invalid event ID." });
-    }
-
-    if (!Number.isInteger(seats) || seats < 1 || seats > 5) {
-      return res.status(400).json({
-        success: false,
-        message: "Seats must be an integer between 1 and 5.",
-      });
-    }
-
     session = await mongoose.startSession();
-    session.startTransaction();
+    let createdBooking;
 
-    const existingBooking = await Booking.findOne({
-      user: req.user._id,
-      event: eventId,
-      status: "booked",
-    }).session(session);
+    await session.withTransaction(
+      async () => {
+        const existingBooking = await Booking.findOne({
+          user: req.user._id,
+          event: eventId,
+          status: "booked",
+        }).session(session);
 
-    if (existingBooking) {
-      await session.abortTransaction();
-      return res.status(409).json({
-        success: false,
-        message: "You already have an active booking for this event.",
-      });
-    }
+        if (existingBooking) {
+          throw new HttpError(409, "You already have an active booking for this event.");
+        }
 
-    // The event must be in the future and have enough seats.
-    const event = await Event.findOneAndUpdate(
-      {
-        _id: eventId,
-        dateTime: { $gt: new Date() },
-        availableSeats: { $gte: seats },
+        const eventDoc = await Event.findById(eventId).session(session);
+        if (!eventDoc) {
+          throw new HttpError(404, "Event not found.");
+        }
+        if (eventDoc.dateTime <= new Date()) {
+          throw new HttpError(400, "Cannot book an event that has already started.");
+        }
+        if (eventDoc.availableSeats < seats) {
+          throw new HttpError(409, "Insufficient seats available.");
+        }
+
+        const event = await Event.findOneAndUpdate(
+          {
+            _id: eventId,
+            dateTime: { $gt: new Date() },
+            availableSeats: { $gte: seats },
+          },
+          { $inc: { availableSeats: -seats } },
+          { returnDocument: "after", session },
+        );
+
+        if (!event) {
+          throw new HttpError(409, "Insufficient seats available.");
+        }
+
+        const totalAmount = seats * event.price;
+        const [booking] = await Booking.create(
+          [{ user: req.user._id, event: eventId, seats, totalAmount, status: "booked" }],
+          { session },
+        );
+
+        createdBooking = booking;
       },
-      { $inc: { availableSeats: -seats } },
-      { new: true, session },
+      { timeoutMS: 5000 },
     );
-
-    if (!event) {
-      await session.abortTransaction();
-      return res.status(409).json({
-        success: false,
-        message: "Event not found, already started, or insufficient seats available.",
-      });
-    }
-
-    const totalAmount = seats * event.price;
-    const [booking] = await Booking.create(
-      [{ user: req.user._id, event: eventId, seats, totalAmount, status: "booked" }],
-      { session },
-    );
-
-    await session.commitTransaction();
 
     return res.status(201).json({
       success: true,
       message: "Event booked successfully.",
-      booking,
+      booking: createdBooking,
     });
   } catch (error) {
-    if (session?.inTransaction()) await session.abortTransaction();
-    console.error(error);
+    if (error instanceof HttpError || error.status) {
+      return res.status(error.status).json({
+        success: false,
+        message: error.message,
+      });
+    }
 
     if (error.code === 11000) {
       return res.status(409).json({
@@ -83,6 +101,14 @@ const bookEvent = async (req, res) => {
       });
     }
 
+    if (error.hasErrorLabel?.("TransientTransactionError") || error.code === 112) {
+      return res.status(409).json({
+        success: false,
+        message: "Unable to complete booking due to concurrent conflict. Please retry.",
+      });
+    }
+
+    console.error(error);
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
@@ -93,87 +119,101 @@ const bookEvent = async (req, res) => {
 };
 
 const cancelEvent = async (req, res) => {
+  const { bookingId } = req.params;
+
+  if (!isValidObjectId(bookingId)) {
+    return res.status(400).json({ success: false, message: "Invalid booking ID." });
+  }
+
   let session;
-
   try {
-    const { bookingId } = req.params;
-
-    if (!isValidObjectId(bookingId)) {
-      return res.status(400).json({ success: false, message: "Invalid booking ID." });
-    }
-
     session = await mongoose.startSession();
-    session.startTransaction();
+    let cancelledBooking;
 
-    const booking = await Booking.findById(bookingId).session(session);
+    await session.withTransaction(
+      async () => {
+        const booking = await Booking.findById(bookingId).session(session);
 
-    if (!booking) {
-      await session.abortTransaction();
-      return res.status(404).json({ success: false, message: "Booking not found." });
-    }
+        if (!booking) {
+          throw new HttpError(404, "Booking not found.");
+        }
 
-    if (!booking.user.equals(req.user._id)) {
-      await session.abortTransaction();
-      return res.status(403).json({
-        success: false,
-        message: "You are not allowed to cancel this booking.",
-      });
-    }
+        if (!booking.user.equals(req.user._id)) {
+          throw new HttpError(403, "You are not allowed to cancel this booking.");
+        }
 
-    if (booking.status !== "booked") {
-      await session.abortTransaction();
-      return res.status(409).json({
-        success: false,
-        message: "Only active bookings can be cancelled.",
-      });
-    }
+        if (booking.status !== "booked") {
+          throw new HttpError(409, "Only active bookings can be cancelled.");
+        }
 
-    const event = await Event.findById(booking.event).session(session);
+        const event = await Event.findById(booking.event).session(session);
 
-    if (!event) {
-      await session.abortTransaction();
-      return res.status(404).json({ success: false, message: "Event not found." });
-    }
+        if (!event) {
+          throw new HttpError(404, "Event not found.");
+        }
 
-    if (event.dateTime <= new Date()) {
-      await session.abortTransaction();
-      return res.status(400).json({
-        success: false,
-        message: "Bookings can only be cancelled before the event starts.",
-      });
-    }
+        if (event.dateTime <= new Date()) {
+          throw new HttpError(400, "Bookings can only be cancelled before the event starts.");
+        }
 
-    // Persist the cancellation and restore inventory in the same transaction.
-    booking.status = "cancelled";
-    await booking.save({ session });
+        // Atomically transition status from "booked" to "cancelled"
+        const updatedBooking = await Booking.findOneAndUpdate(
+          {
+            _id: bookingId,
+            user: req.user._id,
+            status: "booked",
+          },
+          { status: "cancelled" },
+          { returnDocument: "after", session },
+        );
 
-    const updatedEvent = await Event.findOneAndUpdate(
-      {
-        _id: event._id,
-        $expr: {
-          $lte: [
-            { $add: ["$availableSeats", booking.seats] },
-            "$capacity",
-          ],
-        },
+        if (!updatedBooking) {
+          throw new HttpError(409, "Only active bookings can be cancelled.");
+        }
+
+        const updatedEvent = await Event.findOneAndUpdate(
+          {
+            _id: event._id,
+            $expr: {
+              $lte: [
+                { $add: ["$availableSeats", booking.seats] },
+                "$capacity",
+              ],
+            },
+          },
+          { $inc: { availableSeats: booking.seats } },
+          { returnDocument: "after", session },
+        );
+
+        if (!updatedEvent) {
+          throw new HttpError(409, "Could not safely restore event seat inventory.");
+        }
+
+        cancelledBooking = updatedBooking;
       },
-      { $inc: { availableSeats: booking.seats } },
-      { new: true, session },
+      { timeoutMS: 5000 },
     );
-
-    if (!updatedEvent) {
-      throw new Error("Could not safely restore event seat inventory.");
-    }
-
-    await session.commitTransaction();
 
     return res.status(200).json({
       success: true,
       message: "Booking cancelled successfully.",
-      booking,
+      booking: cancelledBooking,
     });
   } catch (error) {
-    if (session?.inTransaction()) await session.abortTransaction();
+    if (error instanceof HttpError || error.status) {
+      return res.status(error.status).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    if (error.hasErrorLabel?.("TransientTransactionError") || error.code === 112) {
+      return res.status(409).json({
+        success: false,
+        message: "Unable to complete cancellation due to concurrent conflict. Please retry.",
+      });
+    }
+
     console.error(error);
     return res.status(500).json({
       success: false,

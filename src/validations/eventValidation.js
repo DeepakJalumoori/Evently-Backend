@@ -19,4 +19,24 @@ const createEventSchema = z.object({
 
 const updateEventSchema = createEventSchema.partial();
 
-export { createEventSchema, updateEventSchema };
+const getOrganizerEventsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  status: z.enum(["all", "upcoming", "past"]).default("all"),
+  sort: z
+    .enum(["dateTime", "-dateTime", "createdAt", "-createdAt", "title", "-title"])
+    .default("-createdAt"),
+});
+
+const getEventBookingsQuerySchema = z.object({
+  status: z.enum(["all", "booked", "cancelled"]).default("all"),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export {
+  createEventSchema,
+  updateEventSchema,
+  getOrganizerEventsQuerySchema,
+  getEventBookingsQuerySchema,
+};

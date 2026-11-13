@@ -18,7 +18,7 @@ const registerUser = async (req, res) => {
       });
     }
 
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role } = result.data;
 
     const existingUser = await User.findOne({ email });
 
@@ -81,7 +81,7 @@ const loginUser = async (req, res) => {
       });
     }
 
-    const { email, password } = req.body;
+    const { email, password } = result.data;
 
     const user = await User.findOne({ email });
 
