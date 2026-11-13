@@ -6,6 +6,8 @@ import {
   getEventById,
   updateEvent,
   deleteEvent,
+  getOrganizerEvents,
+  getEventBookings,
 } from "../controllers/eventController.js";
 
 import authMiddleware from "../Middleware/authMiddleware.js";
@@ -139,7 +141,7 @@ router.post("/", authMiddleware, roleMiddleware("organizer"), createEvent);
  *         name: limit
  *         schema:
  *           type: integer
- *           default: 5
+ *           default: 10
  *
  *     responses:
  *       200:
@@ -148,6 +150,62 @@ router.post("/", authMiddleware, roleMiddleware("organizer"), createEvent);
  *         description: Internal Server Error
  */
 router.get("/", getAllEvents);
+
+/**
+ * @swagger
+ * /api/events/mine:
+ *   get:
+ *     summary: Get organizer's own events
+ *     description: Returns a paginated list of events created by the authenticated organizer with computed booking and capacity stats.
+ *     tags:
+ *       - Events
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (>= 1)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Results per page (1-100)
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [all, upcoming, past]
+ *           default: all
+ *         description: Event status filter based on dateTime
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [dateTime, -dateTime, createdAt, -createdAt, title, -title]
+ *           default: -createdAt
+ *         description: Sort field (prefix with - for descending)
+ *     responses:
+ *       200:
+ *         description: Organizer events fetched successfully
+ *       400:
+ *         description: Invalid query parameters
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied (only organizers allowed)
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get(
+  "/mine",
+  authMiddleware,
+  roleMiddleware("organizer"),
+  getOrganizerEvents,
+);
 
 /**
  * @swagger
@@ -173,6 +231,63 @@ router.get("/", getAllEvents);
  *         description: Internal Server Error
  */
 router.get("/:id", getEventById);
+
+/**
+ * @swagger
+ * /api/events/{id}/bookings:
+ *   get:
+ *     summary: Get attendee bookings for an organizer-owned event
+ *     description: Returns paginated attendee bookings and overall event booking summary stats for an event owned by the authenticated organizer.
+ *     tags:
+ *       - Events
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Event ID
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [all, booked, cancelled]
+ *           default: all
+ *         description: Booking status filter
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (>= 1)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Results per page (1-100)
+ *     responses:
+ *       200:
+ *         description: Event bookings and summary fetched successfully
+ *       400:
+ *         description: Invalid event ID or query parameters
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (not event owner or not an organizer)
+ *       404:
+ *         description: Event not found
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get(
+  "/:id/bookings",
+  authMiddleware,
+  roleMiddleware("organizer"),
+  getEventBookings,
+);
 
 /**
  * @swagger

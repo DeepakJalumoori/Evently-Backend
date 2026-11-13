@@ -70,7 +70,7 @@ eventSchema.index({ city: 1 });
 
 eventSchema.index({ category: 1 });
 
-eventSchema.index({ title: "text" });
+eventSchema.index({ dateTime: 1 });
 
 eventSchema.index({ organizer: 1 });
 
