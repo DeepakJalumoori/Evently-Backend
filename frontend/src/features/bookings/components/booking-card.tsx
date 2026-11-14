@@ -51,10 +51,6 @@ export function BookingCard({ booking, onCancelClick }: BookingCardProps) {
               Cancelled
             </span>
           )}
-          <span className="text-charcoal-400">•</span>
-          <span className="font-mono text-[11px] text-charcoal-500">
-            ID: {booking._id.slice(-6)}
-          </span>
         </div>
 
         <span className="text-[11px] text-charcoal-500">
