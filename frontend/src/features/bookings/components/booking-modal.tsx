@@ -117,9 +117,6 @@ export function BookingModal({ isOpen, onClose, event }: BookingModalProps) {
               <h3 className="text-base font-bold text-emerald-900">
                 Booking Confirmed
               </h3>
-              <p className="text-xs text-emerald-700 mt-0.5">
-                Reference ID: <span className="font-mono font-medium">{successBooking._id}</span>
-              </p>
             </div>
           </div>
 

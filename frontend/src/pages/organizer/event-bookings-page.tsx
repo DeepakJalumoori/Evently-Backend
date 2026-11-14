@@ -425,7 +425,6 @@ export function EventBookingsPage() {
               <thead className="bg-surface border-b border-surface-border text-[11px] font-bold uppercase tracking-wider text-charcoal-500">
                 <tr>
                   <th scope="col" className="px-5 py-3.5">Attendee</th>
-                  <th scope="col" className="px-5 py-3.5">Booking ID</th>
                   <th scope="col" className="px-5 py-3.5 text-center">Seats</th>
                   <th scope="col" className="px-5 py-3.5 text-right">Amount</th>
                   <th scope="col" className="px-5 py-3.5 text-center">Status</th>
@@ -444,13 +443,6 @@ export function EventBookingsPage() {
                           <span className="text-charcoal-400 italic">Unknown Attendee</span>
                         )}
                       </div>
-                    </td>
-
-                    {/* Booking ID */}
-                    <td className="px-5 py-4 font-mono text-[11px] text-charcoal-500">
-                      <span title={booking._id}>
-                        #{booking._id.substring(booking._id.length - 8).toUpperCase()}
-                      </span>
                     </td>
 
                     {/* Seats */}
@@ -517,14 +509,6 @@ export function EventBookingsPage() {
                 <div className="grid grid-cols-2 gap-2 text-xs text-charcoal-600 pt-1 border-t border-surface-border/60">
                   <div>
                     <span className="text-[10px] uppercase font-bold text-charcoal-400 block">
-                      Booking ID
-                    </span>
-                    <span className="font-mono text-charcoal-700">
-                      #{booking._id.substring(booking._id.length - 8).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-charcoal-400 block">
                       Reserved Seats
                     </span>
                     <span className="font-semibold text-charcoal-800">
@@ -539,7 +523,7 @@ export function EventBookingsPage() {
                       {formatPrice(booking.totalAmount)}
                     </span>
                   </div>
-                  <div>
+                  <div className="col-span-2">
                     <span className="text-[10px] uppercase font-bold text-charcoal-400 block">
                       Booked On
                     </span>
